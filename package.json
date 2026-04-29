@@ -1,0 +1,32 @@
+{
+  "name": "mcp-isolated-js",
+  "version": "1.0.0",
+  "description": "MCP server that executes TypeScript code in an isolated Deno sandbox with host-call plugins",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mcp-isolated-js": "dist/cli.js"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "bun build ./src/index.ts ./src/cli.ts --outdir dist --target node --external '@modelcontextprotocol/sdk' --external 'zod'",
+    "test": "bun test",
+    "test:e2e": "bun test test/e2e.test.ts",
+    "start": "bun run src/cli.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "jiti": "^2.6.1",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
