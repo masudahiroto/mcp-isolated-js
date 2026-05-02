@@ -42,7 +42,7 @@ export class SandboxManager extends EventEmitter {
       sandboxPath,
     ], {
       stdio: ['pipe', 'pipe', 'pipe'],
-      env: {},
+      env: { PATH: process.env.PATH || '' },
     });
 
     this.process.stdout?.on('data', (data: Buffer) => {

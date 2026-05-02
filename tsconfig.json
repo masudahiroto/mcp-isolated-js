@@ -13,7 +13,10 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "types": ["bun"]
+    "types": ["bun"],
+    "paths": {
+      "mcp-isolated-js": ["./src/index.ts"]
+    }
   },
   "include": ["src/**/*", "test/**/*"],
   "exclude": ["sandbox/**/*", "dist/**/*"]

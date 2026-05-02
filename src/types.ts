@@ -1,10 +1,30 @@
+import type { z } from 'zod';
+
 /**
  * Plugin registration interface
  */
 export interface PluginFunction {
   name: string;
   description: string;
+  schema: z.ZodTypeAny;
   handler: (args: unknown) => Promise<unknown>;
+}
+
+/**
+ * Type-safe tool handler signature
+ */
+export type ToolHandler<TSchema extends z.ZodTypeAny = z.ZodTypeAny> = (
+  args: z.infer<TSchema>
+) => Promise<unknown> | unknown;
+
+/**
+ * Tool definition with Zod schema
+ */
+export interface ToolDefinition<TSchema extends z.ZodTypeAny = z.ZodTypeAny> {
+  name: string;
+  description: string;
+  schema: TSchema;
+  handler: ToolHandler<TSchema>;
 }
 
 /**
@@ -56,5 +76,5 @@ export interface JsonRpcResponse {
  * Host API exposed to sandbox
  */
 export interface HostApi {
-  callTool: (name: string, args: unknown) => Promise<unknown>;
+  callTool: <T = unknown>(name: string, args: unknown) => Promise<T>;
 }

@@ -8,7 +8,7 @@ import { ExecutionResult } from './types.js';
 export { SandboxManager } from './sandbox-manager.js';
 export { PluginSystem } from './plugin-system.js';
 export { registerTool } from './plugin-registration-bridge.js';
-export type { ExecutionResult } from './types.js';
+export type { ExecutionResult, ToolDefinition, ToolHandler } from './types.js';
 
 /**
  * MCP Server that executes TypeScript code in an isolated Deno sandbox

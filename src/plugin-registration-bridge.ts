@@ -5,10 +5,14 @@
  * The registrar is set by PluginSystem before loading each plugin.
  */
 
+import type { z } from 'zod';
+import type { ToolHandler } from './types.js';
+
 export interface Registrar {
   registerTool(
     name: string,
     description: string,
+    schema: z.ZodTypeAny,
     handler: (...args: unknown[]) => unknown
   ): void;
 }
@@ -23,10 +27,10 @@ export function clearRegistrar(): void {
   currentRegistrar = null;
 }
 
-export function registerTool(
+export function registerTool<TSchema extends z.ZodTypeAny>(
   name: string,
-  description: string,
-  handler: (...args: unknown[]) => unknown
+  schema: TSchema,
+  handler: ToolHandler<TSchema>
 ): void {
   if (!currentRegistrar) {
     throw new Error(
@@ -34,5 +38,11 @@ export function registerTool(
         'Make sure you are importing registerTool from "mcp-isolated-js" inside a plugin file.'
     );
   }
-  currentRegistrar.registerTool(name, description, handler);
+
+  const description = schema.description || '';
+  if (typeof handler !== 'function') {
+    throw new Error('Handler must be a function');
+  }
+
+  currentRegistrar.registerTool(name, description, schema, handler as (...args: unknown[]) => unknown);
 }

@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { promises as fs, existsSync } from 'fs';
 import * as path from 'path';
 import { createJiti } from 'jiti';
@@ -14,6 +15,7 @@ class PluginRegistrationApi {
   registerTool(
     name: string,
     description: string,
+    schema: z.ZodTypeAny,
     handler: (...args: unknown[]) => unknown
   ): void {
     if (typeof handler !== 'function') {
@@ -29,6 +31,7 @@ class PluginRegistrationApi {
     this.functions.push({
       name,
       description,
+      schema,
       handler: async (args: unknown) => {
         // Handle both array and object args
         if (Array.isArray(args)) {
@@ -146,7 +149,8 @@ export class PluginSystem {
     if (!fn) {
       throw new Error(`Unknown function: ${name}`);
     }
-    return await fn.handler(args);
+    const parsed = fn.schema.parse(args);
+    return await fn.handler(parsed);
   }
 
   /**

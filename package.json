@@ -4,6 +4,7 @@
   "description": "MCP server that executes TypeScript code in an isolated Deno sandbox with host-call plugins",
   "type": "module",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "mcp-isolated-js": "dist/cli.js"
   },

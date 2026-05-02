@@ -221,7 +221,7 @@ describe('MCP Isolated JS E2E Tests', () => {
       name: 'execute_js',
       arguments: {
         code: `
-          const result = await host.callTool('echo', 'Hello World');
+          const result = await host.callTool('echo', { message: 'Hello World' });
           return result;
         `,
       },
