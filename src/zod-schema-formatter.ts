@@ -39,11 +39,7 @@ function formatJsonSchemaType(schema: JsonSchemaShape): string {
 /**
  * Build a single-parameter description line.
  */
-function formatParameter(
-  name: string,
-  schema: JsonSchemaShape,
-  isRequired: boolean,
-): string {
+function formatParameter(name: string, schema: JsonSchemaShape, isRequired: boolean): string {
   const typeStr = formatJsonSchemaType(schema);
   const qualifiers: string[] = [];
   if (isRequired) qualifiers.push('required');
@@ -100,7 +96,9 @@ export function formatToolDescription(name: string, schema: z.ZodTypeAny): strin
  * Build the full description for the execute_js MCP tool, appending
  * information about every plugin that is available via host.callTool().
  */
-export function buildExecuteJsDescription(plugins: { name: string; schema: z.ZodTypeAny }[]): string {
+export function buildExecuteJsDescription(
+  plugins: { name: string; schema: z.ZodTypeAny }[],
+): string {
   const base =
     'Execute JavaScript code in an isolated sandbox environment. ' +
     'Standard library is available.';
@@ -109,9 +107,7 @@ export function buildExecuteJsDescription(plugins: { name: string; schema: z.Zod
     return base;
   }
 
-  const toolSections = plugins
-    .map((p) => formatToolDescription(p.name, p.schema))
-    .join('\n\n');
+  const toolSections = plugins.map((p) => formatToolDescription(p.name, p.schema)).join('\n\n');
 
   return (
     base +
