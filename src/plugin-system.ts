@@ -37,11 +37,8 @@ export class PluginSystem {
     schema: TSchema,
     handler: ToolHandler<TSchema>
   ): void {
-    this.addTool(
-      name,
-      schema,
-      handler as (...args: unknown[]) => unknown
-    );
+    const fn = this.createToolFunction(name, schema, handler as (...args: unknown[]) => unknown);
+    this.functions.set(fn.name, fn);
   }
 
   /**
@@ -131,15 +128,6 @@ export class PluginSystem {
     } catch (err) {
       console.error(`Error loading plugin ${resolvedFilePath}:`, err);
     }
-  }
-
-  private addTool(
-    name: string,
-    schema: z.ZodTypeAny,
-    handler: (...args: unknown[]) => unknown
-  ): void {
-    const fn = this.createToolFunction(name, schema, handler);
-    this.functions.set(fn.name, fn);
   }
 
   private createToolFunction(
