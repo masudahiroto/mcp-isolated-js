@@ -1,18 +1,14 @@
 import { z } from 'zod';
 import { promises as fs, existsSync } from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import { createJiti } from 'jiti';
 import { fileURLToPath } from 'url';
-import type {
-  PluginFunction,
-  RegisterToolOptions,
-  ToolHandler,
-} from './types.js';
+import type { PluginFunction, ToolHandler } from './types.js';
 
 export function getDefaultPluginDir(): string {
-  const homeDir = process.env.HOME || process.env.USERPROFILE || '';
   return path.join(
-    homeDir,
+    os.homedir(),
     '.mcp-isolated-coderunner',
     'plugins'
   );
@@ -23,47 +19,6 @@ export interface PluginSystemOptions {
 }
 
 const PLUGIN_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.mjs', '.cjs']);
-
-/**
- * Plugin registration API exposed to plugin files
- */
-class PluginRegistrationApi {
-  private functions: PluginFunction[] = [];
-
-  registerTool(
-    name: string,
-    description: string,
-    schema: z.ZodTypeAny,
-    handler: (...args: unknown[]) => unknown
-  ): void {
-    if (typeof handler !== 'function') {
-      throw new Error('Handler must be a function');
-    }
-    if (typeof name !== 'string' || name.length === 0) {
-      throw new Error('Name must be a non-empty string');
-    }
-    if (typeof description !== 'string') {
-      throw new Error('Description must be a string');
-    }
-
-    this.functions.push({
-      name,
-      description,
-      schema,
-      handler: async (args: unknown) => {
-        // Handle both array and object args
-        if (Array.isArray(args)) {
-          return await handler(...args);
-        }
-        return await handler(args);
-      },
-    });
-  }
-
-  getFunctions(): PluginFunction[] {
-    return this.functions;
-  }
-}
 
 /**
  * Plugin system that loads and manages plugin functions via jiti
@@ -80,21 +35,13 @@ export class PluginSystem {
   registerTool<TSchema extends z.ZodTypeAny>(
     name: string,
     schema: TSchema,
-    handler: ToolHandler<TSchema>,
-    options: RegisterToolOptions = {}
+    handler: ToolHandler<TSchema>
   ): void {
-    const description = options.description ?? schema.description ?? '';
-    const registrationApi = new PluginRegistrationApi();
-    registrationApi.registerTool(
+    this.addTool(
       name,
-      description,
       schema,
       handler as (...args: unknown[]) => unknown
     );
-
-    for (const fn of registrationApi.getFunctions()) {
-      this.functions.set(fn.name, fn);
-    }
   }
 
   /**
@@ -145,7 +92,7 @@ export class PluginSystem {
     const resolvedFilePath = path.resolve(filePath);
 
     try {
-      const registrationApi = new PluginRegistrationApi();
+      const pendingFunctions: PluginFunction[] = [];
 
       // Resolve the bridge module path (must be absolute for alias safety)
       const bridgePath = this.resolveBridgeModulePath();
@@ -160,7 +107,13 @@ export class PluginSystem {
       // Load the bridge module and bind the registrar for this plugin
       const bridge = await jiti.import(bridgePath);
       (bridge as any).setRegistrar({
-        registerTool: registrationApi.registerTool.bind(registrationApi),
+        registerTool: (
+          name: string,
+          schema: z.ZodTypeAny,
+          handler: (...args: unknown[]) => unknown
+        ) => {
+          pendingFunctions.push(this.createToolFunction(name, schema, handler));
+        },
       });
 
       try {
@@ -171,14 +124,48 @@ export class PluginSystem {
         (bridge as any).clearRegistrar?.();
       }
 
-      // Register all functions from this plugin
-      for (const fn of registrationApi.getFunctions()) {
+      for (const fn of pendingFunctions) {
         this.functions.set(fn.name, fn);
         console.error(`[PluginSystem] Registered: ${fn.name}`);
       }
     } catch (err) {
       console.error(`Error loading plugin ${resolvedFilePath}:`, err);
     }
+  }
+
+  private addTool(
+    name: string,
+    schema: z.ZodTypeAny,
+    handler: (...args: unknown[]) => unknown
+  ): void {
+    const fn = this.createToolFunction(name, schema, handler);
+    this.functions.set(fn.name, fn);
+  }
+
+  private createToolFunction(
+    name: string,
+    schema: z.ZodTypeAny,
+    handler: (...args: unknown[]) => unknown
+  ): PluginFunction {
+    if (typeof handler !== 'function') {
+      throw new Error('Handler must be a function');
+    }
+    if (typeof name !== 'string' || name.length === 0) {
+      throw new Error('Name must be a non-empty string');
+    }
+
+    return {
+      name,
+      description: schema.description ?? '',
+      schema,
+      handler: async (args: unknown) => {
+        // Handle both array and object args
+        if (Array.isArray(args)) {
+          return await handler(...args);
+        }
+        return await handler(args);
+      },
+    };
   }
 
   /**

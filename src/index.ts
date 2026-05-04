@@ -9,7 +9,6 @@ export type { PluginSystemOptions } from './plugin-system.js';
 export { registerTool } from './plugin-registration-bridge.js';
 export type {
   ExecutionResult,
-  RegisterToolOptions,
   ToolDefinition,
   ToolHandler,
 } from './types.js';

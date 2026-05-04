@@ -11,7 +11,6 @@ import type { ToolHandler } from './types.js';
 export interface Registrar {
   registerTool(
     name: string,
-    description: string,
     schema: z.ZodTypeAny,
     handler: (...args: unknown[]) => unknown
   ): void;
@@ -39,10 +38,9 @@ export function registerTool<TSchema extends z.ZodTypeAny>(
     );
   }
 
-  const description = schema.description || '';
   if (typeof handler !== 'function') {
     throw new Error('Handler must be a function');
   }
 
-  currentRegistrar.registerTool(name, description, schema, handler as (...args: unknown[]) => unknown);
+  currentRegistrar.registerTool(name, schema, handler as (...args: unknown[]) => unknown);
 }

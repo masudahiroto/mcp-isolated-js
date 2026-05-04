@@ -2,7 +2,6 @@ import { SandboxManager } from './sandbox-manager.js';
 import { PluginSystem } from './plugin-system.js';
 import type {
   ExecutionResult,
-  RegisterToolOptions,
   ToolDefinition,
   ToolHandler,
 } from './types.js';
@@ -40,10 +39,9 @@ export class IsolatedJsRunner {
   registerTool<TSchema extends z.ZodTypeAny>(
     name: string,
     schema: TSchema,
-    handler: ToolHandler<TSchema>,
-    options: RegisterToolOptions = {}
+    handler: ToolHandler<TSchema>
   ): void {
-    this.plugins.registerTool(name, schema, handler, options);
+    this.plugins.registerTool(name, schema, handler);
   }
 
   registerTools(definitions: ToolDefinition[]): void {
@@ -51,8 +49,7 @@ export class IsolatedJsRunner {
       this.plugins.registerTool(
         definition.name,
         definition.schema,
-        definition.handler,
-        { description: definition.description }
+        definition.handler
       );
     }
   }

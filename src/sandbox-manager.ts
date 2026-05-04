@@ -1,5 +1,6 @@
 import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
+import * as os from 'os';
 import * as fs from 'fs';
 import { EventEmitter } from 'events';
 import { fileURLToPath } from 'url';
@@ -90,7 +91,7 @@ export class SandboxManager extends EventEmitter {
    * Find Deno executable path
    */
   private findDenoPath(): string {
-    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+    const homeDir = os.homedir();
     const candidates = [
       process.env.DENO_INSTALL ? path.join(process.env.DENO_INSTALL, 'bin', 'deno') : '',
       path.join(homeDir, '.deno', 'bin', 'deno'),

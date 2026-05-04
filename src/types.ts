@@ -22,16 +22,8 @@ export type ToolHandler<TSchema extends z.ZodTypeAny = z.ZodTypeAny> = (
  */
 export interface ToolDefinition<TSchema extends z.ZodTypeAny = z.ZodTypeAny> {
   name: string;
-  description?: string;
   schema: TSchema;
   handler: ToolHandler<TSchema>;
-}
-
-/**
- * Options for programmatic tool registration
- */
-export interface RegisterToolOptions {
-  description?: string;
 }
 
 /**

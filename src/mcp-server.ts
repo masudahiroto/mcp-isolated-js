@@ -2,11 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { IsolatedJsRunner } from './runner.js';
-import type {
-  RegisterToolOptions,
-  ToolDefinition,
-  ToolHandler,
-} from './types.js';
+import type { ToolDefinition, ToolHandler } from './types.js';
 
 export interface McpIsolatedJsServerOptions {
   pluginDirs?: string[];
@@ -49,10 +45,9 @@ export class McpIsolatedJsServer {
   registerTool<TSchema extends z.ZodTypeAny>(
     name: string,
     schema: TSchema,
-    handler: ToolHandler<TSchema>,
-    options: RegisterToolOptions = {}
+    handler: ToolHandler<TSchema>
   ): void {
-    this.runner.registerTool(name, schema, handler, options);
+    this.runner.registerTool(name, schema, handler);
   }
 
   registerTools(definitions: ToolDefinition[]): void {

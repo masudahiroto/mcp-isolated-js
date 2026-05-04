@@ -37,7 +37,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "bun build ./src/index.ts ./src/cli.ts ./src/mcp-server.ts ./src/runner.ts ./src/plugin-system.ts ./src/sandbox-manager.ts ./src/plugin-registration-bridge.ts --outdir dist --target node --external '@modelcontextprotocol/sdk' --external 'zod'",
+    "build": "tsc -p tsconfig.build.json",
     "test": "bun test",
     "test:e2e": "bun test test/e2e.test.ts",
     "start": "bun run src/cli.ts"
@@ -51,6 +51,7 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "typescript": "^6.0.3"
   }
 }
