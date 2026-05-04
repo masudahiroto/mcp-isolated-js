@@ -46,8 +46,7 @@ export class SandboxManager extends EventEmitter {
     const denoArgs = [
       'run',
       ...(fs.existsSync(sandboxConfigPath) ? ['--config', sandboxConfigPath] : []),
-      '--allow-read',
-      '--allow-write',
+
       sandboxPath,
     ];
 
