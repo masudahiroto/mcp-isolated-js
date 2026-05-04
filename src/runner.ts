@@ -1,10 +1,6 @@
 import { SandboxManager } from './sandbox-manager.js';
 import { PluginSystem } from './plugin-system.js';
-import type {
-  ExecutionResult,
-  ToolDefinition,
-  ToolHandler,
-} from './types.js';
+import type { ExecutionResult, ToolDefinition, ToolHandler } from './types.js';
 import type { z } from 'zod';
 
 export interface IsolatedJsRunnerOptions {
@@ -39,18 +35,14 @@ export class IsolatedJsRunner {
   registerTool<TSchema extends z.ZodTypeAny>(
     name: string,
     schema: TSchema,
-    handler: ToolHandler<TSchema>
+    handler: ToolHandler<TSchema>,
   ): void {
     this.plugins.registerTool(name, schema, handler);
   }
 
   registerTools(definitions: ToolDefinition[]): void {
     for (const definition of definitions) {
-      this.plugins.registerTool(
-        definition.name,
-        definition.schema,
-        definition.handler
-      );
+      this.plugins.registerTool(definition.name, definition.schema, definition.handler);
     }
   }
 
@@ -86,11 +78,7 @@ export class IsolatedJsRunner {
   private setupSandboxHandlers(): void {
     this.sandbox.on(
       'request',
-      async (
-        method: string,
-        params: unknown,
-        id: string | number | undefined
-      ) => {
+      async (method: string, params: unknown, id: string | number | undefined) => {
         if (method === 'host.callTool') {
           const { name, args } = params as { name: string; args: unknown };
 
@@ -104,7 +92,7 @@ export class IsolatedJsRunner {
               this.sandbox.respondError(
                 id,
                 -32000,
-                err instanceof Error ? err.message : String(err)
+                err instanceof Error ? err.message : String(err),
               );
             }
           }
@@ -114,7 +102,7 @@ export class IsolatedJsRunner {
         if (id !== undefined) {
           this.sandbox.respondError(id, -32601, `Unknown method: ${method}`);
         }
-      }
+      },
     );
   }
 }

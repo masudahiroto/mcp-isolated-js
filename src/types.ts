@@ -14,7 +14,7 @@ export interface PluginFunction {
  * Type-safe tool handler signature
  */
 export type ToolHandler<TSchema extends z.ZodTypeAny = z.ZodTypeAny> = (
-  args: z.infer<TSchema>
+  args: z.infer<TSchema>,
 ) => Promise<unknown> | unknown;
 
 /**
@@ -54,14 +54,14 @@ export interface ExecutionResult {
 export type JsonRpcId = string | number | null;
 
 export interface JsonRpcRequest {
-  jsonrpc: "2.0";
+  jsonrpc: '2.0';
   id?: JsonRpcId;
   method: string;
   params?: unknown;
 }
 
 export interface JsonRpcResponse {
-  jsonrpc: "2.0";
+  jsonrpc: '2.0';
   id: JsonRpcId;
   result?: unknown;
   error?: {

@@ -26,18 +26,10 @@ registerTool(
         .optional()
         .default('GET')
         .describe('HTTP method'),
-      headers: z
-        .record(z.string())
-        .optional()
-        .describe('Additional HTTP headers'),
-      body: z
-        .string()
-        .optional()
-        .describe('Request body for POST/PUT requests'),
+      headers: z.record(z.string()).optional().describe('Additional HTTP headers'),
+      body: z.string().optional().describe('Request body for POST/PUT requests'),
     })
-    .describe(
-      'Fetches content from a URL. Returns status code, headers, and body text.'
-    ),
+    .describe('Fetches content from a URL. Returns status code, headers, and body text.'),
   async (args) => {
     const fetchOptions: RequestInit = {
       method: args.method,
@@ -61,7 +53,7 @@ registerTool(
       headers: Object.fromEntries(response.headers.entries()),
       body: text,
     };
-  }
+  },
 );
 
 registerTool(
@@ -69,23 +61,11 @@ registerTool(
   z
     .object({
       url: z.string().describe('The URL to fetch (expected to return JSON)'),
-      method: z
-        .enum(['GET', 'POST'])
-        .optional()
-        .default('GET')
-        .describe('HTTP method'),
-      headers: z
-        .record(z.string())
-        .optional()
-        .describe('Additional HTTP headers'),
-      body: z
-        .string()
-        .optional()
-        .describe('Request body for POST requests'),
+      method: z.enum(['GET', 'POST']).optional().default('GET').describe('HTTP method'),
+      headers: z.record(z.string()).optional().describe('Additional HTTP headers'),
+      body: z.string().optional().describe('Request body for POST requests'),
     })
-    .describe(
-      'Fetches JSON content from a URL. Returns parsed JSON data.'
-    ),
+    .describe('Fetches JSON content from a URL. Returns parsed JSON data.'),
   async (args) => {
     const fetchOptions: RequestInit = {
       method: args.method,
@@ -99,8 +79,7 @@ registerTool(
     if (args.body && args.method === 'POST') {
       fetchOptions.body = args.body;
       if (!args.headers?.['Content-Type']) {
-        (fetchOptions.headers as Record<string, string>)['Content-Type'] =
-          'application/json';
+        (fetchOptions.headers as Record<string, string>)['Content-Type'] = 'application/json';
       }
     }
 
@@ -112,5 +91,5 @@ registerTool(
       status: response.status,
       data,
     };
-  }
+  },
 );

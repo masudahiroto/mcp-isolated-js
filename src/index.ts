@@ -7,8 +7,4 @@ export type { SandboxManagerOptions } from './sandbox-manager.js';
 export { PluginSystem, getDefaultPluginDir } from './plugin-system.js';
 export type { PluginSystemOptions } from './plugin-system.js';
 export { registerTool } from './plugin-registration-bridge.js';
-export type {
-  ExecutionResult,
-  ToolDefinition,
-  ToolHandler,
-} from './types.js';
+export type { ExecutionResult, ToolDefinition, ToolHandler } from './types.js';
