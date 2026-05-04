@@ -30,28 +30,50 @@ class E2ETest {
 
   async start(): Promise<void> {
     const testPluginsDir = path.join(process.cwd(), 'test', 'plugins');
-    const homeDir = path.join(os.tmpdir(), `mcp-test-${Date.now()}`);
-    fs.mkdirSync(path.join(homeDir, '.mcp-isolated-coderunner', 'plugins'), { recursive: true });
+    const pluginsDir = path.join(os.tmpdir(), `mcp-test-${Date.now()}`, 'plugins');
+    fs.mkdirSync(pluginsDir, { recursive: true });
     
     const pluginFiles = fs.readdirSync(testPluginsDir);
     for (const file of pluginFiles) {
       if (file.endsWith('.ts')) {
         fs.copyFileSync(
           path.join(testPluginsDir, file),
-          path.join(homeDir, '.mcp-isolated-coderunner', 'plugins', file)
+          path.join(pluginsDir, file)
         );
       }
     }
 
+    fs.writeFileSync(
+      path.join(pluginsDir, 'custom-plugin.ts'),
+      `
+        import { z } from 'zod';
+        import { registerTool } from 'mcp-isolated-js';
+
+        registerTool(
+          'customValue',
+          z.object({ value: z.string() }).describe('Returns a custom plugin value'),
+          async (args) => ({ custom: args.value })
+        );
+      `
+    );
+
     const env = {
       ...process.env,
-      HOME: homeDir,
+      DENO_DIR:
+        process.env.DENO_DIR ||
+        path.join(os.tmpdir(), 'mcp-isolated-js-deno-cache'),
       MCP_TEST_API_KEY: 'secret-api-key-12345',
     };
 
     // Use bun to run TypeScript directly
     const serverPath = path.join(process.cwd(), 'src', 'cli.ts');
-    this.serverProcess = spawn('bun', ['run', serverPath], {
+    this.serverProcess = spawn('bun', [
+      'run',
+      serverPath,
+      '--no-default-plugins',
+      '--plugin-dir',
+      pluginsDir,
+    ], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env,
     });
@@ -232,6 +254,23 @@ describe('MCP Isolated JS E2E Tests', () => {
     expect(result.ok).toBe(true);
     expect(result.value.message).toBe('Echo: Hello World');
     expect(result.value.envCheck.hasApiKey).toBe(true);
+  });
+
+  test('Loads plugin from custom CLI plugin directory', async () => {
+    const response = await e2eTest['sendRequest']('tools/call', {
+      name: 'execute_js',
+      arguments: {
+        code: `
+          const result = await host.callTool('customValue', { value: 'from-custom-dir' });
+          return result;
+        `,
+      },
+    });
+    expect(response.error).toBeUndefined();
+
+    const result = JSON.parse((response.result as any).content[0].text);
+    expect(result.ok).toBe(true);
+    expect(result.value.custom).toBe('from-custom-dir');
   });
 
   test('Multiple plugin calls in one execution', async () => {

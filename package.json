@@ -5,16 +5,39 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./runner": {
+      "types": "./dist/runner.d.ts",
+      "import": "./dist/runner.js"
+    },
+    "./mcp-server": {
+      "types": "./dist/mcp-server.d.ts",
+      "import": "./dist/mcp-server.js"
+    },
+    "./plugin-system": {
+      "types": "./dist/plugin-system.d.ts",
+      "import": "./dist/plugin-system.js"
+    },
+    "./sandbox-manager": {
+      "types": "./dist/sandbox-manager.d.ts",
+      "import": "./dist/sandbox-manager.js"
+    }
+  },
   "bin": {
     "mcp-isolated-js": "dist/cli.js"
   },
   "files": [
     "dist/",
+    "sandbox/",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "build": "bun build ./src/index.ts ./src/cli.ts --outdir dist --target node --external '@modelcontextprotocol/sdk' --external 'zod'",
+    "build": "tsc -p tsconfig.build.json",
     "test": "bun test",
     "test:e2e": "bun test test/e2e.test.ts",
     "start": "bun run src/cli.ts"
@@ -28,6 +51,7 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "typescript": "^6.0.3"
   }
 }
