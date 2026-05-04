@@ -77,7 +77,7 @@ export class McpIsolatedJsServer {
       code: z
         .string()
         .describe(
-          'TypeScript/JavaScript code to execute. ' +
+          'JavaScript code to execute. ' +
             'Use host.callTool("functionName", args) to call plugins.'
         ),
     });
@@ -86,7 +86,7 @@ export class McpIsolatedJsServer {
       'execute_js',
       {
         description:
-          'Execute TypeScript/JavaScript code in an isolated sandbox environment. ' +
+          'Execute JavaScript code in an isolated sandbox environment. ' +
           'Standard library is available. ' +
           'Use host.callTool(name, args) to call plugin functions that run outside the sandbox.',
         inputSchema,
