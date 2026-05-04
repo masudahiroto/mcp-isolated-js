@@ -1,7 +1,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { RegisteredTool } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { IsolatedJsRunner } from './runner.js';
+import { buildExecuteJsDescription } from './zod-schema-formatter.js';
 import type { ToolDefinition, ToolHandler } from './types.js';
 
 export interface McpIsolatedJsServerOptions {
@@ -15,9 +17,11 @@ export interface McpIsolatedJsServerOptions {
 /**
  * MCP adapter for the isolated JavaScript runner.
  */
+
 export class McpIsolatedJsServer {
   private mcpServer: McpServer;
   private runner: IsolatedJsRunner;
+  private executeJsTool: RegisteredTool | null = null;
 
   constructor(options: McpIsolatedJsServerOptions = {}) {
     this.runner =
@@ -56,6 +60,7 @@ export class McpIsolatedJsServer {
 
   async start(): Promise<void> {
     await this.runner.start();
+    this.updateExecuteJsDescription();
 
     const transport = new StdioServerTransport();
     await this.mcpServer.connect(transport);
@@ -82,13 +87,15 @@ export class McpIsolatedJsServer {
         ),
     });
 
-    this.mcpServer.registerTool(
+    const description =
+      'Execute JavaScript code in an isolated sandbox environment. ' +
+      'Standard library is available. ' +
+      'Use host.callTool(name, args) to call plugin functions that run outside the sandbox.';
+
+    this.executeJsTool = this.mcpServer.registerTool(
       'execute_js',
       {
-        description:
-          'Execute JavaScript code in an isolated sandbox environment. ' +
-          'Standard library is available. ' +
-          'Use host.callTool(name, args) to call plugin functions that run outside the sandbox.',
+        description,
         inputSchema,
       },
       async (args) => {
@@ -103,5 +110,18 @@ export class McpIsolatedJsServer {
         };
       },
     );
+  }
+
+  /**
+   * Update the execute_js tool description to include plugin information.
+   * Must be called after plugins are loaded but before the transport connects.
+   */
+  private updateExecuteJsDescription(): void {
+    if (!this.executeJsTool) return;
+
+    const plugins = this.runner.getPluginSystem().getAllFunctions();
+    const description = buildExecuteJsDescription(plugins);
+
+    this.executeJsTool.update({ description });
   }
 }

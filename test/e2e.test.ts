@@ -299,6 +299,41 @@ describe('MCP Isolated JS E2E Tests', () => {
     expect(toolNames).not.toContain('plugin_fetchUrl');
   });
 
+  test('execute_js description includes plugin tool information', async () => {
+    const response = await e2eTest['sendRequest']('tools/list');
+    expect(response.error).toBeUndefined();
+
+    const tools = (response.result as any)?.tools || [];
+    expect(tools.length).toBe(1);
+
+    const description: string = tools[0].description;
+    // Base description must be present
+    expect(description).toContain('Execute JavaScript code');
+
+    // Plugin section header
+    expect(description).toContain('host.callTool');
+
+    // Each loaded plugin should appear in the description
+    expect(description).toContain('host.callTool("echo")');
+    expect(description).toContain('host.callTool("fetchUrl")');
+    expect(description).toContain('host.callTool("calculate")');
+    expect(description).toContain('host.callTool("customValue")');
+
+    // Plugin descriptions from their Zod schemas
+    expect(description).toContain('Echoes the message back');
+    expect(description).toContain('Fetches data from a URL');
+    expect(description).toContain('Performs arithmetic calculations');
+    expect(description).toContain('Returns a custom plugin value');
+
+    // Schema parameter details should be present
+    expect(description).toContain('message');
+    expect(description).toContain('url');
+    expect(description).toContain('a');
+    expect(description).toContain('b');
+    expect(description).toContain('operation');
+    expect(description).toContain('value');
+  });
+
   test('Syntax error is properly caught', async () => {
     const response = await e2eTest['sendRequest']('tools/call', {
       name: 'execute_js',
