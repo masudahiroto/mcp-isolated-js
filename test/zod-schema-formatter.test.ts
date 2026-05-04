@@ -127,7 +127,7 @@ describe('buildExecuteJsDescription', () => {
         name: 'envVars',
         schema: z
           .object({
-            vars: z.record(z.string()).optional().describe('Environment variables'),
+            vars: z.record(z.string(), z.string()).optional().describe('Environment variables'),
           })
           .describe('Sets environment variables'),
       },
