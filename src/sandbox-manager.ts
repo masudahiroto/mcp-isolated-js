@@ -2,11 +2,17 @@ import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
 import { EventEmitter } from 'events';
+import { fileURLToPath } from 'url';
 import { JsonRpcRequest, JsonRpcResponse, JsonRpcId, ExecutionResult } from './types.js';
 
 interface PendingRequest {
   resolve: (value: unknown) => void;
   reject: (reason?: unknown) => void;
+}
+
+export interface SandboxManagerOptions {
+  sandboxPath?: string;
+  denoPath?: string;
 }
 
 /**
@@ -19,9 +25,13 @@ export class SandboxManager extends EventEmitter {
   private nextId = 1;
   private isReady = false;
   private buffer = '';
+  private sandboxPath?: string;
+  private denoPath?: string;
 
-  constructor() {
+  constructor(options: SandboxManagerOptions = {}) {
     super();
+    this.sandboxPath = options.sandboxPath;
+    this.denoPath = options.denoPath;
   }
 
   /**
@@ -29,20 +39,25 @@ export class SandboxManager extends EventEmitter {
    * Network access is disabled (--allow-net is NOT passed)
    */
   async start(): Promise<void> {
-    const sandboxPath = path.join(process.cwd(), 'sandbox', 'sandbox.ts');
-    
-    const denoPath = process.env.DENO_PATH || this.findDenoPath();
-
-    // Spawn Deno process WITHOUT network access
-    // --allow-net is intentionally NOT included
-    this.process = spawn(denoPath, [
+    const sandboxPath = this.sandboxPath ?? this.resolveSandboxPath();
+    const denoPath = this.denoPath ?? process.env.DENO_PATH ?? this.findDenoPath();
+    const sandboxConfigPath = path.join(path.dirname(sandboxPath), 'deno.json');
+    const denoArgs = [
       'run',
+      ...(fs.existsSync(sandboxConfigPath) ? ['--config', sandboxConfigPath] : []),
       '--allow-read',
       '--allow-write',
       sandboxPath,
-    ], {
+    ];
+
+    // Spawn Deno process WITHOUT network access
+    // --allow-net is intentionally NOT included
+    this.process = spawn(denoPath, denoArgs, {
       stdio: ['pipe', 'pipe', 'pipe'],
-      env: { PATH: process.env.PATH || '' },
+      env: {
+        PATH: process.env.PATH || '',
+        ...(process.env.DENO_DIR ? { DENO_DIR: process.env.DENO_DIR } : {}),
+      },
     });
 
     this.process.stdout?.on('data', (data: Buffer) => {
@@ -92,6 +107,27 @@ export class SandboxManager extends EventEmitter {
       } catch { /* continue */ }
     }
     return 'deno';
+  }
+
+  private resolveSandboxPath(): string {
+    if (process.env.MCP_ISOLATED_JS_SANDBOX_PATH) {
+      return process.env.MCP_ISOLATED_JS_SANDBOX_PATH;
+    }
+
+    const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+    const candidates = [
+      path.join(moduleDir, '..', 'sandbox', 'sandbox.ts'),
+      path.join(moduleDir, 'sandbox', 'sandbox.ts'),
+      path.join(process.cwd(), 'sandbox', 'sandbox.ts'),
+    ];
+
+    for (const candidate of candidates) {
+      if (fs.existsSync(candidate)) {
+        return candidate;
+      }
+    }
+
+    return candidates[0];
   }
 
   private handleData(data: string): void {

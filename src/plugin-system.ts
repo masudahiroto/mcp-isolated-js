@@ -2,9 +2,27 @@ import { z } from 'zod';
 import { promises as fs, existsSync } from 'fs';
 import * as path from 'path';
 import { createJiti } from 'jiti';
-import { PluginFunction } from './types.js';
+import { fileURLToPath } from 'url';
+import type {
+  PluginFunction,
+  RegisterToolOptions,
+  ToolHandler,
+} from './types.js';
 
-const PLUGINS_DIR = path.join(process.env.HOME || '', '.mcp-isolated-coderunner', 'plugins');
+export function getDefaultPluginDir(): string {
+  const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+  return path.join(
+    homeDir,
+    '.mcp-isolated-coderunner',
+    'plugins'
+  );
+}
+
+export interface PluginSystemOptions {
+  pluginDirs?: string[];
+}
+
+const PLUGIN_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.mjs', '.cjs']);
 
 /**
  * Plugin registration API exposed to plugin files
@@ -52,28 +70,70 @@ class PluginRegistrationApi {
  */
 export class PluginSystem {
   private functions = new Map<string, PluginFunction>();
-  private loaded = false;
+  private pluginDirs: string[];
+  private loadedPluginDirs = new Set<string>();
+
+  constructor(options: PluginSystemOptions = {}) {
+    this.pluginDirs = options.pluginDirs ?? [];
+  }
+
+  registerTool<TSchema extends z.ZodTypeAny>(
+    name: string,
+    schema: TSchema,
+    handler: ToolHandler<TSchema>,
+    options: RegisterToolOptions = {}
+  ): void {
+    const description = options.description ?? schema.description ?? '';
+    const registrationApi = new PluginRegistrationApi();
+    registrationApi.registerTool(
+      name,
+      description,
+      schema,
+      handler as (...args: unknown[]) => unknown
+    );
+
+    for (const fn of registrationApi.getFunctions()) {
+      this.functions.set(fn.name, fn);
+    }
+  }
 
   /**
-   * Load all plugins from the plugins directory
+   * Load all plugins from the default home plugin directory.
    */
-  async loadPlugins(): Promise<void> {
-    if (this.loaded) return;
+  async loadDefaultPlugins(): Promise<void> {
+    await this.loadPlugins([getDefaultPluginDir()]);
+  }
+
+  /**
+   * Load all plugins from one or more plugin directories.
+   */
+  async loadPlugins(pluginDirs = this.pluginDirs): Promise<void> {
+    for (const pluginDir of pluginDirs) {
+      await this.loadPluginDir(pluginDir);
+    }
+  }
+
+  /**
+   * Load all plugin files from one plugin directory.
+   */
+  async loadPluginDir(pluginDir: string): Promise<void> {
+    const resolvedDir = path.resolve(pluginDir);
+    if (this.loadedPluginDirs.has(resolvedDir)) return;
 
     try {
-      const entries = await fs.readdir(PLUGINS_DIR, { withFileTypes: true });
+      const entries = await fs.readdir(resolvedDir, { withFileTypes: true });
 
       for (const entry of entries) {
-        if (entry.isFile() && entry.name.endsWith('.ts')) {
-          await this.loadPluginFile(path.join(PLUGINS_DIR, entry.name));
+        if (entry.isFile() && PLUGIN_EXTENSIONS.has(path.extname(entry.name))) {
+          await this.loadPluginFile(path.join(resolvedDir, entry.name));
         }
       }
 
-      this.loaded = true;
+      this.loadedPluginDirs.add(resolvedDir);
     } catch (err) {
       // Plugins directory doesn't exist or can't be read - that's ok
       if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
-        console.error('Error loading plugins:', err);
+        console.error(`Error loading plugins from ${resolvedDir}:`, err);
       }
     }
   }
@@ -81,7 +141,9 @@ export class PluginSystem {
   /**
    * Load a single plugin file using jiti
    */
-  private async loadPluginFile(filePath: string): Promise<void> {
+  async loadPluginFile(filePath: string): Promise<void> {
+    const resolvedFilePath = path.resolve(filePath);
+
     try {
       const registrationApi = new PluginRegistrationApi();
 
@@ -101,9 +163,13 @@ export class PluginSystem {
         registerTool: registrationApi.registerTool.bind(registrationApi),
       });
 
-      // Read the plugin source and evaluate it via jiti
-      const source = await fs.readFile(filePath, 'utf-8');
-      await jiti.evalModule(source, { id: filePath });
+      try {
+        // Read the plugin source and evaluate it via jiti
+        const source = await fs.readFile(resolvedFilePath, 'utf-8');
+        await jiti.evalModule(source, { id: resolvedFilePath });
+      } finally {
+        (bridge as any).clearRegistrar?.();
+      }
 
       // Register all functions from this plugin
       for (const fn of registrationApi.getFunctions()) {
@@ -111,7 +177,7 @@ export class PluginSystem {
         console.error(`[PluginSystem] Registered: ${fn.name}`);
       }
     } catch (err) {
-      console.error(`Error loading plugin ${filePath}:`, err);
+      console.error(`Error loading plugin ${resolvedFilePath}:`, err);
     }
   }
 
@@ -120,7 +186,7 @@ export class PluginSystem {
    * Handles both source (.ts) and compiled (.js) environments.
    */
   private resolveBridgeModulePath(): string {
-    const srcDir = path.dirname(new URL(import.meta.url).pathname);
+    const srcDir = path.dirname(fileURLToPath(import.meta.url));
     const candidates = [
       path.join(srcDir, 'plugin-registration-bridge.ts'),
       path.join(srcDir, 'plugin-registration-bridge.js'),
