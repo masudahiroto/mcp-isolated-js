@@ -36,7 +36,7 @@ export class McpIsolatedJsServer {
         capabilities: {
           tools: {},
         },
-      }
+      },
     );
 
     this.registerMcpTools();
@@ -45,7 +45,7 @@ export class McpIsolatedJsServer {
   registerTool<TSchema extends z.ZodTypeAny>(
     name: string,
     schema: TSchema,
-    handler: ToolHandler<TSchema>
+    handler: ToolHandler<TSchema>,
   ): void {
     this.runner.registerTool(name, schema, handler);
   }
@@ -78,7 +78,7 @@ export class McpIsolatedJsServer {
         .string()
         .describe(
           'JavaScript code to execute. ' +
-            'Use host.callTool("functionName", args) to call plugins.'
+            'Use host.callTool("functionName", args) to call plugins.',
         ),
     });
 
@@ -101,7 +101,7 @@ export class McpIsolatedJsServer {
             },
           ],
         };
-      }
+      },
     );
   }
 }

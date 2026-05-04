@@ -19,5 +19,5 @@ registerTool(
     return {
       greeting: `Hello, ${args.name}!`,
     };
-  }
+  },
 );

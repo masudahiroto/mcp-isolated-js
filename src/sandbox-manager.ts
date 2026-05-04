@@ -76,13 +76,13 @@ export class SandboxManager extends EventEmitter {
 
     this.process.on('exit', (code) => {
       this.emit('exit', code);
-      for (const [id, pending] of this.pendingRequests) {
+      for (const [, pending] of this.pendingRequests) {
         pending.reject(new Error('Sandbox process exited'));
       }
       this.pendingRequests.clear();
     });
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     this.isReady = true;
   }
 
@@ -104,7 +104,9 @@ export class SandboxManager extends EventEmitter {
       try {
         fs.accessSync(candidate, fs.constants.X_OK);
         return candidate;
-      } catch { /* continue */ }
+      } catch {
+        /* continue */
+      }
     }
     return 'deno';
   }
@@ -134,13 +136,13 @@ export class SandboxManager extends EventEmitter {
     this.buffer += data;
     const lines = this.buffer.split('\n');
     this.buffer = lines.pop() || '';
-    
+
     for (const line of lines) {
       if (!line.trim()) continue;
       try {
         const msg = JSON.parse(line);
         this.handleMessage(msg);
-      } catch (err) {
+      } catch {
         console.error('[SandboxManager] Invalid JSON:', line.slice(0, 200));
       }
     }
@@ -148,7 +150,11 @@ export class SandboxManager extends EventEmitter {
 
   private handleMessage(msg: JsonRpcResponse | JsonRpcRequest): void {
     // Check if it's a response (has result or error)
-    if (msg.id !== undefined && msg.id !== null && (('result' in msg && msg.result !== undefined) || ('error' in msg && msg.error !== undefined))) {
+    if (
+      msg.id !== undefined &&
+      msg.id !== null &&
+      (('result' in msg && msg.result !== undefined) || ('error' in msg && msg.error !== undefined))
+    ) {
       const pending = this.pendingRequests.get(msg.id);
       if (pending) {
         this.pendingRequests.delete(msg.id);
@@ -208,7 +214,7 @@ export class SandboxManager extends EventEmitter {
   }
 
   async executeCode(code: string): Promise<ExecutionResult> {
-    return await this.request('runUserCode', { code }) as ExecutionResult;
+    return (await this.request('runUserCode', { code })) as ExecutionResult;
   }
 
   stop(): void {

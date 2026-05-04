@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { describe, test, expect, afterEach } from "bun:test";
+import { describe, test, expect, afterEach } from 'bun:test';
 import { z } from 'zod';
 import { IsolatedJsRunner } from '../src/index.js';
 
@@ -19,7 +19,7 @@ describe('IsolatedJsRunner', () => {
         a: z.number(),
         b: z.number(),
       }),
-      async ({ a, b }) => a + b
+      async ({ a, b }) => a + b,
     );
 
     await runner.start();

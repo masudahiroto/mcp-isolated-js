@@ -9,11 +9,7 @@ import type { z } from 'zod';
 import type { ToolHandler } from './types.js';
 
 export interface Registrar {
-  registerTool(
-    name: string,
-    schema: z.ZodTypeAny,
-    handler: (...args: unknown[]) => unknown
-  ): void;
+  registerTool(name: string, schema: z.ZodTypeAny, handler: (...args: unknown[]) => unknown): void;
 }
 
 let currentRegistrar: Registrar | null = null;
@@ -29,12 +25,12 @@ export function clearRegistrar(): void {
 export function registerTool<TSchema extends z.ZodTypeAny>(
   name: string,
   schema: TSchema,
-  handler: ToolHandler<TSchema>
+  handler: ToolHandler<TSchema>,
 ): void {
   if (!currentRegistrar) {
     throw new Error(
       'registerTool() called outside of plugin loading context. ' +
-        'Make sure you are importing registerTool from "mcp-isolated-js" inside a plugin file.'
+        'Make sure you are importing registerTool from "mcp-isolated-js" inside a plugin file.',
     );
   }
 

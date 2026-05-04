@@ -7,11 +7,7 @@ import { fileURLToPath } from 'url';
 import type { PluginFunction, ToolHandler } from './types.js';
 
 export function getDefaultPluginDir(): string {
-  return path.join(
-    os.homedir(),
-    '.mcp-isolated-coderunner',
-    'plugins'
-  );
+  return path.join(os.homedir(), '.mcp-isolated-coderunner', 'plugins');
 }
 
 export interface PluginSystemOptions {
@@ -35,7 +31,7 @@ export class PluginSystem {
   registerTool<TSchema extends z.ZodTypeAny>(
     name: string,
     schema: TSchema,
-    handler: ToolHandler<TSchema>
+    handler: ToolHandler<TSchema>,
   ): void {
     const fn = this.createToolFunction(name, schema, handler as (...args: unknown[]) => unknown);
     this.functions.set(fn.name, fn);
@@ -102,12 +98,13 @@ export class PluginSystem {
       });
 
       // Load the bridge module and bind the registrar for this plugin
-      const bridge = await jiti.import(bridgePath);
-      (bridge as any).setRegistrar({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const bridge = (await jiti.import(bridgePath)) as any;
+      bridge.setRegistrar({
         registerTool: (
           name: string,
           schema: z.ZodTypeAny,
-          handler: (...args: unknown[]) => unknown
+          handler: (...args: unknown[]) => unknown,
         ) => {
           pendingFunctions.push(this.createToolFunction(name, schema, handler));
         },
@@ -118,7 +115,7 @@ export class PluginSystem {
         const source = await fs.readFile(resolvedFilePath, 'utf-8');
         await jiti.evalModule(source, { id: resolvedFilePath });
       } finally {
-        (bridge as any).clearRegistrar?.();
+        bridge.clearRegistrar?.();
       }
 
       for (const fn of pendingFunctions) {
@@ -133,7 +130,7 @@ export class PluginSystem {
   private createToolFunction(
     name: string,
     schema: z.ZodTypeAny,
-    handler: (...args: unknown[]) => unknown
+    handler: (...args: unknown[]) => unknown,
   ): PluginFunction {
     if (typeof handler !== 'function') {
       throw new Error('Handler must be a function');

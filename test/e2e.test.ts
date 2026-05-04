@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import { describe, test, expect, beforeAll, afterAll } from 'bun:test';
 import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -32,14 +32,11 @@ class E2ETest {
     const testPluginsDir = path.join(process.cwd(), 'test', 'plugins');
     const pluginsDir = path.join(os.tmpdir(), `mcp-test-${Date.now()}`, 'plugins');
     fs.mkdirSync(pluginsDir, { recursive: true });
-    
+
     const pluginFiles = fs.readdirSync(testPluginsDir);
     for (const file of pluginFiles) {
       if (file.endsWith('.ts')) {
-        fs.copyFileSync(
-          path.join(testPluginsDir, file),
-          path.join(pluginsDir, file)
-        );
+        fs.copyFileSync(path.join(testPluginsDir, file), path.join(pluginsDir, file));
       }
     }
 
@@ -54,29 +51,25 @@ class E2ETest {
           z.object({ value: z.string() }).describe('Returns a custom plugin value'),
           async (args) => ({ custom: args.value })
         );
-      `
+      `,
     );
 
     const env = {
       ...process.env,
-      DENO_DIR:
-        process.env.DENO_DIR ||
-        path.join(os.tmpdir(), 'mcp-isolated-js-deno-cache'),
+      DENO_DIR: process.env.DENO_DIR || path.join(os.tmpdir(), 'mcp-isolated-js-deno-cache'),
       MCP_TEST_API_KEY: 'secret-api-key-12345',
     };
 
     // Use bun to run TypeScript directly
     const serverPath = path.join(process.cwd(), 'src', 'cli.ts');
-    this.serverProcess = spawn('bun', [
-      'run',
-      serverPath,
-      '--no-default-plugins',
-      '--plugin-dir',
-      pluginsDir,
-    ], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env,
-    });
+    this.serverProcess = spawn(
+      'bun',
+      ['run', serverPath, '--no-default-plugins', '--plugin-dir', pluginsDir],
+      {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env,
+      },
+    );
 
     this.serverProcess.stdout?.on('data', (data: Buffer) => {
       this.handleData(data.toString());
@@ -89,7 +82,7 @@ class E2ETest {
       }
     });
 
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   }
 
   private handleData(data: string): void {
@@ -106,7 +99,9 @@ class E2ETest {
           this.pendingResponses.delete(response.id);
           handler(response);
         }
-      } catch {}
+      } catch {
+        // ignore non-JSON lines
+      }
     }
   }
 
@@ -149,7 +144,7 @@ describe('MCP Isolated JS E2E Tests', () => {
   test('List tools includes only execute_js', async () => {
     const response = await e2eTest['sendRequest']('tools/list');
     expect(response.error).toBeUndefined();
-    
+
     const tools = (response.result as any)?.tools || [];
     expect(tools.length).toBe(1);
     expect(tools[0].name).toBe('execute_js');
@@ -184,7 +179,7 @@ describe('MCP Isolated JS E2E Tests', () => {
 
     const result = JSON.parse((response.result as any).content[0].text);
     expect(result.ok).toBe(true);
-    
+
     const logs = result.logs.join(' ');
     expect(logs).toContain('[log] Hello from sandbox');
     expect(logs).toContain('[info] Info message');
@@ -295,10 +290,10 @@ describe('MCP Isolated JS E2E Tests', () => {
   test('Plugin functions are not exposed as MCP tools', async () => {
     const response = await e2eTest['sendRequest']('tools/list');
     expect(response.error).toBeUndefined();
-    
+
     const tools = (response.result as any)?.tools || [];
     const toolNames = tools.map((t: any) => t.name);
-    
+
     expect(toolNames).not.toContain('plugin_calculate');
     expect(toolNames).not.toContain('plugin_echo');
     expect(toolNames).not.toContain('plugin_fetchUrl');
@@ -334,16 +329,17 @@ describe('MCP Isolated JS E2E Tests', () => {
 
     const result = JSON.parse((response.result as any).content[0].text);
     expect(result.ok).toBe(true);
-    
+
     // fetch should fail in sandbox
     expect(result.value.success).toBe(false);
-    
+
     const errorMsg = result.value?.error || '';
-    const hasPermissionError = errorMsg.toLowerCase().includes('permission') || 
-                                errorMsg.toLowerCase().includes('not allowed') || 
-                                errorMsg.toLowerCase().includes('denied') ||
-                                errorMsg.toLowerCase().includes('requires net access') ||
-                                errorMsg.toLowerCase().includes('--allow-net');
+    const hasPermissionError =
+      errorMsg.toLowerCase().includes('permission') ||
+      errorMsg.toLowerCase().includes('not allowed') ||
+      errorMsg.toLowerCase().includes('denied') ||
+      errorMsg.toLowerCase().includes('requires net access') ||
+      errorMsg.toLowerCase().includes('--allow-net');
     expect(hasPermissionError).toBe(true);
   });
 
