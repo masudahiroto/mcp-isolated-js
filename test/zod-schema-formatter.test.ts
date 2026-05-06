@@ -43,7 +43,7 @@ describe('formatToolDescription', () => {
     expect(result).toContain('Request body');
   });
 
-    test('formats schema with array type', () => {
+  test('formats schema with array type', () => {
     const schema = z
       .object({
         items: z.array(z.string()).describe('List of items'),
