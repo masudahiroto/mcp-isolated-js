@@ -81,7 +81,7 @@ describe('buildExecuteJsDescription', () => {
   test('returns base description when no plugins', () => {
     const result = buildExecuteJsDescription([]);
     expect(result).toBe(
-      'Execute JavaScript code in an isolated sandbox environment. Standard library is available.',
+      'Execute JavaScript code in an isolated sandbox environment. Standard library is available. The result includes both the return value of the code and any output from console.log/console.info/console.warn/console.error.',
     );
   });
 
@@ -98,6 +98,7 @@ describe('buildExecuteJsDescription', () => {
     const result = buildExecuteJsDescription(plugins);
 
     expect(result).toContain('Execute JavaScript code in an isolated sandbox environment.');
+    expect(result).toContain('await host.callTool');
     expect(result).toContain('host.callTool("hello")');
     expect(result).toContain('Greets a person by name');
     expect(result).toContain('- name (string, required)');
