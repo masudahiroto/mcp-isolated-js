@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { describe, test, expect } from 'bun:test';
+import { describe, test, expect, spyOn } from 'bun:test';
 import { z } from 'zod';
 import { formatToolDescription, buildExecuteJsDescription } from '../src/zod-schema-formatter.js';
 
@@ -43,7 +43,7 @@ describe('formatToolDescription', () => {
     expect(result).toContain('Request body');
   });
 
-  test('formats schema with array type', () => {
+    test('formats schema with array type', () => {
     const schema = z
       .object({
         items: z.array(z.string()).describe('List of items'),
@@ -81,7 +81,7 @@ describe('buildExecuteJsDescription', () => {
   test('returns base description when no plugins', () => {
     const result = buildExecuteJsDescription([]);
     expect(result).toBe(
-      'Execute JavaScript code in an isolated sandbox environment. Standard library is available.',
+      'Execute JavaScript code in an isolated sandbox environment. Standard library is available. The result includes both the return value of the code and any output from console.log/console.info/console.warn/console.error.',
     );
   });
 
@@ -98,6 +98,7 @@ describe('buildExecuteJsDescription', () => {
     const result = buildExecuteJsDescription(plugins);
 
     expect(result).toContain('Execute JavaScript code in an isolated sandbox environment.');
+    expect(result).toContain('await host.callTool');
     expect(result).toContain('host.callTool("hello", ...)');
     expect(result).toContain('Greets a person by name');
     expect(result).toContain('- name (string, required)');
@@ -136,5 +137,26 @@ describe('buildExecuteJsDescription', () => {
     // Should not throw even if toJSONSchema fails on z.record
     const result = buildExecuteJsDescription(plugins);
     expect(result).toContain('host.callTool("envVars", ...)');
+  });
+
+  test('logs error and falls back when z.toJSONSchema fails', () => {
+    const schema = z.object({ name: z.string() }).describe('A simple tool');
+
+    const spy = spyOn(z, 'toJSONSchema').mockImplementation(() => {
+      throw new Error('forced toJSONSchema failure');
+    });
+    const consoleSpy = spyOn(console, 'error').mockImplementation(() => {});
+
+    const result = formatToolDescription('testTool', schema);
+
+    expect(result).toContain('## host.callTool("testTool")');
+    expect(result).toContain('A simple tool');
+    expect(result).not.toContain('Parameters:');
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[zod-schema-formatter] z.toJSONSchema failed for tool "testTool"'),
+    );
+
+    spy.mockRestore();
+    consoleSpy.mockRestore();
   });
 });
