@@ -64,7 +64,7 @@ function formatParameter(name: string, schema: JsonSchemaShape, isRequired: bool
  */
 export function formatToolDescription(name: string, schema: z.ZodTypeAny): string {
   const lines: string[] = [];
-  lines.push(`## host.callTool("${name}")`);
+  lines.push(`## host.callTool("${name}", ...)`);
 
   let jsonSchema: JsonSchemaShape;
   try {
