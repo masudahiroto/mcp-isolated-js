@@ -82,15 +82,15 @@ export class McpIsolatedJsServer {
       code: z
         .string()
         .describe(
-          'JavaScript code to execute. ' +
-            'Use host.callTool("functionName", args) to call plugins.',
+          'JavaScript code to execute. Example: const result = await host.callTool("readFile", { path: "/tmp/file" }); console.log(result);',
         ),
     });
 
     const description =
       'Execute JavaScript code in an isolated sandbox environment. ' +
       'Standard library is available. ' +
-      'Use host.callTool(name, args) to call plugin functions that run outside the sandbox.';
+      'The result includes both the return value of the code and any output from console.log/console.info/console.warn/console.error. ' +
+      'Use await host.callTool(name, args) to call plugin functions that run outside the sandbox.';
 
     this.executeJsTool = this.mcpServer.registerTool(
       'execute_js',

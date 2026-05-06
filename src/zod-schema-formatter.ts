@@ -102,9 +102,10 @@ export function formatToolDescription(name: string, schema: z.ZodTypeAny): strin
 export function buildExecuteJsDescription(
   plugins: { name: string; schema: z.ZodTypeAny }[],
 ): string {
-  const base =
+  let base =
     'Execute JavaScript code in an isolated sandbox environment. ' +
-    'Standard library is available.';
+    'Standard library is available. ' +
+    'The result includes both the return value of the code and any output from console.log/console.info/console.warn/console.error.';
 
   if (plugins.length === 0) {
     return base;
@@ -112,10 +113,11 @@ export function buildExecuteJsDescription(
 
   const toolSections = plugins.map((p) => formatToolDescription(p.name, p.schema)).join('\n\n');
 
-  return (
-    base +
+  base +=
     '\n\n' +
-    'The following plugin tools are available via host.callTool(name, args):\n\n' +
-    toolSections
-  );
+    'Plugin tools are available via `await host.callTool(name, args)` (must be awaited).\n' +
+    'Example: `const result = await host.callTool("functionName", { param1: value1 }); console.log(result); return 0;`\n\n' +
+    toolSections;
+
+  return base;
 }
