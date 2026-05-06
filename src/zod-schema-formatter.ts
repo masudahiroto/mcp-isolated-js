@@ -69,8 +69,11 @@ export function formatToolDescription(name: string, schema: z.ZodTypeAny): strin
   let jsonSchema: JsonSchemaShape;
   try {
     jsonSchema = z.toJSONSchema(schema) as JsonSchemaShape;
-  } catch {
+  } catch (err) {
     // toJSONSchema may fail for some schema shapes; fall back gracefully
+    console.error(
+      `[zod-schema-formatter] z.toJSONSchema failed for tool "${name}": ${err instanceof Error ? err.message : String(err)}`,
+    );
     const desc = schema.description ?? '';
     lines.push(desc);
     return lines.join('\n');

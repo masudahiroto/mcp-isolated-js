@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { describe, test, expect } from 'bun:test';
+import { describe, test, expect, spyOn } from 'bun:test';
 import { z } from 'zod';
 import { formatToolDescription, buildExecuteJsDescription } from '../src/zod-schema-formatter.js';
 
@@ -136,5 +136,26 @@ describe('buildExecuteJsDescription', () => {
     // Should not throw even if toJSONSchema fails on z.record
     const result = buildExecuteJsDescription(plugins);
     expect(result).toContain('host.callTool("envVars")');
+  });
+
+  test('logs error and falls back when z.toJSONSchema fails', () => {
+    const schema = z.object({ name: z.string() }).describe('A simple tool');
+
+    const spy = spyOn(z, 'toJSONSchema').mockImplementation(() => {
+      throw new Error('forced toJSONSchema failure');
+    });
+    const consoleSpy = spyOn(console, 'error').mockImplementation(() => {});
+
+    const result = formatToolDescription('testTool', schema);
+
+    expect(result).toContain('## host.callTool("testTool")');
+    expect(result).toContain('A simple tool');
+    expect(result).not.toContain('Parameters:');
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[zod-schema-formatter] z.toJSONSchema failed for tool "testTool"'),
+    );
+
+    spy.mockRestore();
+    consoleSpy.mockRestore();
   });
 });

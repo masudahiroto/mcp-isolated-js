@@ -26,7 +26,7 @@ registerTool(
         .optional()
         .default('GET')
         .describe('HTTP method'),
-      headers: z.record(z.string()).optional().describe('Additional HTTP headers'),
+      headers: z.record(z.string(), z.string()).optional().describe('Additional HTTP headers'),
       body: z.string().optional().describe('Request body for POST/PUT requests'),
     })
     .describe('Fetches content from a URL. Returns status code, headers, and body text.'),
@@ -62,7 +62,7 @@ registerTool(
     .object({
       url: z.string().describe('The URL to fetch (expected to return JSON)'),
       method: z.enum(['GET', 'POST']).optional().default('GET').describe('HTTP method'),
-      headers: z.record(z.string()).optional().describe('Additional HTTP headers'),
+      headers: z.record(z.string(), z.string()).optional().describe('Additional HTTP headers'),
       body: z.string().optional().describe('Request body for POST requests'),
     })
     .describe('Fetches JSON content from a URL. Returns parsed JSON data.'),
