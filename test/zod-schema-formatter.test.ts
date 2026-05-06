@@ -149,7 +149,7 @@ describe('buildExecuteJsDescription', () => {
 
     const result = formatToolDescription('testTool', schema);
 
-    expect(result).toContain('## host.callTool("testTool")');
+    expect(result).toContain('## host.callTool("testTool", ...)');
     expect(result).toContain('A simple tool');
     expect(result).not.toContain('Parameters:');
     expect(consoleSpy).toHaveBeenCalledWith(
