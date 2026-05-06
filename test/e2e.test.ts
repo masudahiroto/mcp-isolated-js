@@ -314,10 +314,10 @@ describe('MCP Isolated JS E2E Tests', () => {
     expect(description).toContain('host.callTool');
 
     // Each loaded plugin should appear in the description
-    expect(description).toContain('host.callTool("echo")');
-    expect(description).toContain('host.callTool("fetchUrl")');
-    expect(description).toContain('host.callTool("calculate")');
-    expect(description).toContain('host.callTool("customValue")');
+    expect(description).toContain('host.callTool("echo", ...)');
+    expect(description).toContain('host.callTool("fetchUrl", ...)');
+    expect(description).toContain('host.callTool("calculate", ...)');
+    expect(description).toContain('host.callTool("customValue", ...)');
 
     // Plugin descriptions from their Zod schemas
     expect(description).toContain('Echoes the message back');

@@ -13,7 +13,7 @@ describe('formatToolDescription', () => {
 
     const result = formatToolDescription('hello', schema);
 
-    expect(result).toContain('## host.callTool("hello")');
+    expect(result).toContain('## host.callTool("hello", ...)');
     expect(result).toContain('Greets a person by name');
     expect(result).toContain('- name (string, required)');
     expect(result).toContain('Name to greet');
@@ -34,7 +34,7 @@ describe('formatToolDescription', () => {
 
     const result = formatToolDescription('webFetch', schema);
 
-    expect(result).toContain('## host.callTool("webFetch")');
+    expect(result).toContain('## host.callTool("webFetch", ...)');
     expect(result).toContain('Fetches content from a URL');
     expect(result).toContain('- url (string, required)');
     expect(result).toContain('The URL to fetch');
@@ -60,7 +60,7 @@ describe('formatToolDescription', () => {
 
     const result = formatToolDescription('simple', schema);
 
-    expect(result).toContain('## host.callTool("simple")');
+    expect(result).toContain('## host.callTool("simple", ...)');
     expect(result).toContain('A simple string');
     expect(result).not.toContain('Parameters:');
   });
@@ -72,7 +72,7 @@ describe('formatToolDescription', () => {
 
     const result = formatToolDescription('noDesc', schema);
 
-    expect(result).toContain('## host.callTool("noDesc")');
+    expect(result).toContain('## host.callTool("noDesc", ...)');
     expect(result).toContain('- value (number, required)');
   });
 });
@@ -98,7 +98,7 @@ describe('buildExecuteJsDescription', () => {
     const result = buildExecuteJsDescription(plugins);
 
     expect(result).toContain('Execute JavaScript code in an isolated sandbox environment.');
-    expect(result).toContain('host.callTool("hello")');
+    expect(result).toContain('host.callTool("hello", ...)');
     expect(result).toContain('Greets a person by name');
     expect(result).toContain('- name (string, required)');
   });
@@ -117,8 +117,8 @@ describe('buildExecuteJsDescription', () => {
 
     const result = buildExecuteJsDescription(plugins);
 
-    expect(result).toContain('host.callTool("hello")');
-    expect(result).toContain('host.callTool("add")');
+    expect(result).toContain('host.callTool("hello", ...)');
+    expect(result).toContain('host.callTool("add", ...)');
   });
 
   test('handles record type gracefully (toJSONSchema may fail)', () => {
@@ -135,6 +135,6 @@ describe('buildExecuteJsDescription', () => {
 
     // Should not throw even if toJSONSchema fails on z.record
     const result = buildExecuteJsDescription(plugins);
-    expect(result).toContain('host.callTool("envVars")');
+    expect(result).toContain('host.callTool("envVars", ...)');
   });
 });
